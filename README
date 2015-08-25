@@ -1,0 +1,92 @@
+----------------------------------------------------------------------------
+ALLENMINER: a tool for identification of genes expressed in patterns of
+              interest using the Allen Brain Atlas
+
+v2.01. Nov 27, 2012.
+
+Copyright 2008, 2012  Fred P. Davis
+----------------------------------------------------------------------------
+
+
+o What is ALLENMINER?
+---------------------
+
+ALLENMINER is a software package that performs expression queries of
+user-specified regions of the developing and adult mouse brains using the 3D
+expression data in the Allen Brain Atlas. It can identify genes that are (1)
+expressed, (2) expressed specifically, (3) expressed non-uniformly, (4)
+expressed in a graded fashion, or (5) expressed in a pattern similar to a query
+gene, in a user-specified region of interest of the mouse brain. The region of
+interest can be specified as a set of ABA reference brain region names or as
+x,y,z bounds of a cuboid region of interest.
+
+The code includes several routines that are generally useful for processing ABA
+data files, including parsers for the XML and XPZ files. Besides accessing the
+raw data, these routines are useful for visualizing ABA expression files on
+platforms where the ABA BrainExplorer application is not available (eg,
+GNU/Linux). For example, all ABA expression files can be converted to PDB
+(protein data bank) format for visualization in protein structure viewers, such
+as PyMOL (http://pymol.org).
+
+I developed ALLENMINER as a postdoc at the HHMI Janelia Research Campus.
+
+o What is new in ALLENMINER v2.01?
+
+Updated to latest adult mouse brain atlas (v3).
+
+o What was new in ALLENMINER v2.0?
+
+1. It was udpated to reflect changes in the Allen Brain Atlas:
+
+ *  The latest adult brain reference atlas (v2) offers nearly 600 more brain
+    region definitions than the previous version.
+
+ *  The file formats and web data accessibility have changed slightly. For
+    example, the main 3D adult data is no longer released in XPR file format,
+    but instead uses a format similar to the XPZ used by the old developing
+    atlas (which is also now deprecated). The old parsing routines are kept
+    for legacy data and for other datasets that havent migrated yet, such as
+    the sleeping mouse study.
+
+2. Spinal expression database can now be searched using flexible queries.
+
+3. Easier to install and run
+
+
+o Documentation
+---------------
+
+ docs/allenminer_user_manual.pdf offers detailed instruction on
+ installation and usage. This README offers a quick guide to a small
+ subset of the features.
+
+
+o Citing ALLENMINER
+-------------------
+ A tool for identification of genes expressed in patterns of interest using
+ the Allen Brain Atlas. Fred P. Davis and Sean R. Eddy.
+ Bioinformatics 2009. 25(13): 1647-54. doi:10.1093/bioinformatics/btp288
+
+
+o Contact information
+---------------------
+ Fred P. Davis
+ http://fredpdavis.com
+ fredpdavis@gmail.com
+
+This file is part of ALLENMINER.
+
+ALLENMINER is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+ALLENMINER is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with ALLENMINER.  If not, see <http://www.gnu.org/licenses/>.
+
+----------------------------------------------------------------------------

@@ -1,0 +1,897 @@
+\documentclass[10pt]{article}
+\usepackage[nohead,margin=2cm,includefoot]{geometry}
+\geometry{verbose,letterpaper,tmargin=1in,bmargin=1in,lmargin=1in,rmargin=1in}
+\renewcommand{\familydefault}{\sfdefault}
+\usepackage{graphicx}
+\usepackage{color}
+\usepackage{hyperref}
+\usepackage{setspace}
+\usepackage{listings}
+\title{ALLENMINER users guide\\v2.01 (2012 Nov 27)\\
+\includegraphics[bb=279 200 355 276,scale=0.6]{allenminer_logo.pdf}}
+\author{Fred P. Davis\\{\tt \href{http://fredpdavis.com}{http://fredpdavis.com}}}
+\begin{document}
+
+\maketitle
+
+\section*{Introduction}
+ALLENMINER searches gene expression in the adult and developing mouse brain and spinal cord atlases published by the Allen Institute for Brain Science (\href{http://www.alleninstitute.org}{AIBS}). It can identify genes that are (1) expressed, (2) expressed specifically, (3) expressed non-uniformly, (4) expressed in a graded fashion, or (5) expressed in a pattern similar to a query gene, in a user-specified region of interest of the mouse brain -- specified either as a set of brain region names or as x,y,z bounds of a cuboid.
+
+The code includes several routines for processing Allen Brain Atlas (ABA) data files, including the 3D expression data and the adult and developing reference atlases. Besides accessing the raw data, these routines are useful for visualizing ABA expression files on platforms where the ABA BrainExplorer application is not available, such as GNU/Linux. For example, all ABA expression files can be converted to PDB (Protein DataBank) format for visualization in protein structure viewers, such as PyMOL (\url{http://pymol.org}).
+
+I developed ALLENMINER as a postdoc at the \href{http://janelia.org}{HHMI Janelia Research Campus}.
+
+\section*{What's new in v2.01?}
+Updated to the lastest adult mouse brain atlas (v3).
+
+\section*{What was new in v2.0?}
+\begin{itemize}\itemsep0pt
+\item Easier to install. No longer requires Python, any CPAN packages, or the (now outdated) ABA API package.
+
+\item Searches the latest ABA adult (v2.0; Nov 2011 release) and developing mouse brain atlases (v3.0; Nov 2011 release), as well as the adult and developing spinal cord atlases.
+
+\item Experimental mode ({\tt make\_report}) to format search results together with original 2D ISH images for viewing in a web browser.
+
+\end{itemize}
+
+\tableofcontents
+
+
+\section{Installing ALLENMINER}
+
+\subsection{Prerequisites}
+\begin{enumerate}\itemsep0pt
+\item Perl (\url{http://www.perl.org})
+
+Usually pre-installed on Mac OS X and GNU/Linux. Other visit (\url{http://www.perl.org/get.html}).
+
+\item wget (\url{http://www.gnu.org/software/wget}) - to download ABA data.
+
+\item unzip - to parse expression data.
+
+\item gzip - to compress output files.
+\end{enumerate}
+
+
+\subsection{Download the program}
+
+Download the program from \url{http://fredpdavis.com/allenminer} and unpack it in your desired installation directory:
+\lstset{breaklines=true,language=bash}
+\lstset{frame=single}
+\lstset{basicstyle=\ttfamily}
+\begin{lstlisting}
+cd /usr/local/software
+tar xvfz allenminer_v2.01.tar.gz
+\end{lstlisting}
+
+
+\subsection{Place the perl library in your PERL5LIB path}
+
+Place the directory containing alnmnr.pm (src/perl\_api) in your PERL5LIB environment variable:
+
+For example, if you run a csh or tcsh shell, add this to your .cshrc file:
+\begin{lstlisting}
+setenv PERL5LIB {$PERL5LIB}:/usr/local/software/allenminer_v2.0/src/perl_api
+\end{lstlisting}
+
+For a bash shell, add this to your .bashrc:
+\begin{lstlisting}
+PERL5LIB=/usr/local/software/allenminer_v2.0/src/perl_api:$PERL5LIB
+export PERL5LIB
+\end{lstlisting}
+
+\subsection{Specify local configuration details}
+
+Edit the alnmnr.pm specs section (line 65) to specify the:
+\begin{itemize}
+   \item Directory where ABA files will be downloaded.
+\lstset{breaklines=true,language=bash,breakatwhitespace=true}
+\lstset{frame=single}
+\lstset{basicstyle=\ttfamily}
+\begin{lstlisting}
+$specs->{allen_data_dir} = '/groups/eddy/home/davisf/work/databases/ABA_data' ;
+\end{lstlisting}
+
+   \item If you want to run parallel searches on an SGE cluster, edit the following lines (67-70):
+\lstset{breaklines=true,language=bash,breakatwhitespace=true}
+\lstset{frame=single}
+\lstset{basicstyle=\ttfamily}
+\begin{lstlisting}
+$specs->{cluster}->{OPTION} = VALUE ;
+\end{lstlisting}
+
+\begin{enumerate}
+   \item {\tt cluster\_mode} - if 1, uses a cluster by default. if 0, will not.
+   \item {\tt head\_node} - this is the name of the machine from which jobs can be submitted; make sure you have passwordless ssh setup between your local machine and the cluster head node. If you can submit directly from your local machine, set this to blank: '' .
+   \item {\tt numjobs} - maximum number of compute nodes to use.
+   \item {\tt qstat\_sleep} - how often to qstat the jobs (sec)
+\end{enumerate}
+\end{itemize}
+
+\subsection{Download ABA atlases}
+
+A local repository of adult ($\sim$ 10GB) and developing ($\sim$ 8GB) three-dimensional expression data is useful for custom ROI, gradient/patterning searches, or similarity searches. However, for simple queries of the expression level in a reference atlas region, or relative enrichment between two atlas regions, you can use the {\tt fastsearch} run mode, which doesn't require a full dataset, and runs much faster. It does this by searching through summary files generated by ALLENMINER that describe expression levels for all genes, in all regions, at all developmental timepoints.\\
+
+For fastsearch runs, you'll need to download these summary files (total $\sim$ 800 MB) by running this command:
+\lstset{breaklines=true,language=bash}
+\lstset{frame=single}
+\lstset{basicstyle=\ttfamily}
+\begin{lstlisting}
+perl allenminer.pl -mode download -type fastsearch
+\end{lstlisting}
+
+To get the full datasets for the adult brain, developing brain or spinal cord data, these commands will download the appropriate files from the ABA webserver into the directory specified above ({\tt \$specs->\{allen\_data\_dir\}}):
+\lstset{breaklines=true,language=bash}
+\lstset{frame=single}
+\lstset{basicstyle=\ttfamily}
+\begin{lstlisting}
+perl allenminer.pl -mode download -type adultbrain
+perl allenminer.pl -mode download -type develbrain
+perl allenminer.pl -mode download -type spinalcord
+\end{lstlisting}
+
+\section{Running ALLENMINER}
+ALLENMINER has six run modes for the brain (search, fastsearch, simsearch, roiop, convert, make\_report) and  one for the spinal cord (spinesearch).
+
+\subsection{{\tt search}: Search for genes expressed/enriched/patterned in an ROI}
+
+Processes expression files and returns the absolute levels and enrichment within one or more user-specified region of interest.\\
+
+\begin{lstlisting}
+perl allenminer.pl -mode search -roidef_fn ROI_DEFINITION_FILE [-age AGE] [-cluster_fl 1] [-xpz_list_fn XPZ_LIST_FILE]
+\end{lstlisting}
+
+\begin{itemize}
+\item {\tt -roidef\_fn ROI\_DEFINITION\_FILE}
+
+file containing ROI definition (see {\it Input file formats} section)
+
+\item {\tt -age AGE}
+
+Specifies the developmental stage, one of: E11.5, E13.5, E15.5, E18.5, P4, P14, P28, P56 (or adult). If not specified, defaults to adult.
+
+\item {\tt -xpz\_list\_fn XPZ\_LIST\_FILE}
+file containing a list of XPZ files to process; if not specified, will parse all XPZ files located in the \$specs-$>$\{allen\_xpz\_dir\}/AGE directory specified in alnmnr.pm
+
+\item {\tt -patterning $<$0$|$1$>$} (optional)
+
+if 1, computes gradient and patterning scores for any ROI that have been partitioned ({\tt with -mode roiop -type partition}). If set, the output contains 2 more record types: 'S' - specificity and 'P' - patterning.
+
+\item {\tt -lrcheck $<$0$|$1$>$} (optional)
+
+if 1, creates L/R copies of all defined ROI, and separately computes expression values for each side. It also sets the {\tt -patterning 1} option to compute the enrichment in either side vs the full ROI. High `enrichment' scores indicate imageseries that are asymmetric.
+
+\item {\tt -cluster\_fl $<$0$|$1$>$} (optional)
+
+if 1, runs the query in parallel using an SGE computing cluster, as specified in SGE.pm
+
+\item {\tt -xyz\_details 1} (optional)
+
+if 1, creates text format tab-delimited files for each processed expression file that contains detailed expression data per ROI coordinate.
+
+NOTE: this will create a file FOR EACH expression file processed. If you are running a query over the full expression data, this means $\sim$ 25,000 files for adult and $\sim$ 2,500 files for each developing atlas. In this case, it is probably wise to specify the {\tt -xyz\_details\_out\_dir} and {\tt -xyz\_details\_out\_subdir} options.
+
+\item {\tt -xyz\_details\_compress 1} (optional; for use with -xyz\_details 1)
+
+Compress xyz\_details output files
+
+\item {\tt -xyz\_details\_out\_suffix SUFFIX} (optional)
+
+Append xyz\_details output files with the suffix ``SUFFIX''
+
+\item {\tt -xyz\_details\_out\_dir OUTDIR} (optional)
+
+Deposit xyz\_details output files into the OUTDIR directory; defaults to the current directory
+
+\item {\tt -xyz\_details\_out\_subdir $<$0$|$1$>$} (optional)
+
+If specified, will deposit xyz\_details output files into a sub-directory using the first character of the filename. For example, the output for Egfr\_coronal\_XXXX.xpz will be placed in the E subdirectory instead of directly into the output directory -- which is either the current directory or a directory specified by {\tt -xyz\_details\_out\_dir}
+
+\end{itemize}
+
+\subsection{{\tt fastsearch}: Index-accelerated search of ABA brain regions}
+
+Provides a faster alternative to the {\tt search} mode for expression queries involving named ABA brain regions. This mode is faster because instead of parsing individual XPZ files, it uses a single file that contains pre-computed {\tt search} results for all genes in all named ABA brain regions.\\
+
+\begin{lstlisting}
+perl allenminer.pl -mode fastsearch -query_specs_fn QUERY_SPECS_FILENAME [-out_fn OUTPUT_FILE_NAME] [-outfile_prefix OUTPUT_FILE_PREFIX]
+\end{lstlisting}
+
+\begin{itemize}
+\item {\tt -query\_specs\_fn $<$QUERY SPECIFICATIONS FILE$>$}
+
+this file describes the details of the query to be performed (see {\it Input file formats} section).
+
+\item {\tt -outfile\_prefix $<$OUTPUT FILE PREFIX$>$} (optional)
+
+specify this if you would like the results of each query to be displayed in a separate file, with this prefix. The suffix is ``\_QUERYNAME.allenminer.out''
+
+\item {\tt -out\_fn $<$OUTPUT FILE NAME$>$} (optional)
+
+specify this if you want the results of all queries to be displayed in the same output file
+\end{itemize}
+
+If nothing is specified about an output file, it displays the results in:\\``aba\_fast\_query.QUERYNAME.PID.allenminer.out'' where PID is the process id.\\
+
+\subsection{{\tt simsearch}: similarity search within an optionally defined ROI}
+
+Computes the similarity of pairs of expression patterns across the whole brain or in a specified region of interest. The similarity score between two expression files is calculated as the Pearson's correlation of the expression energy values across all cubes shared between the two datasets, or across the cubes in an optionally defined ROI. This is the same scoring function as used by the AIBS's NeuroBLAST tool. The expression files contain two measures of expression for each 3D-registered voxel: intensity and density. The energy score combines these measures into a single ({\it ad hoc}) measure ($\mbox{energy} = \mbox{intensity} \cdot \mbox{density}$) for use in calculating the Pearson's correlation.\\
+
+\begin{lstlisting}
+perl allenminer.pl -mode simsearch -roidef_fn ROI_DEFINITION_FILE -xpz_query_list_fn QUERYLIST -xpz_query_fn QUERY_XPZ_FILE -xpz_target_list_fn TARGETLIST [-out_fn OUTPUT_FILE_NAME] [-cluster_fl 1] [-age AGE]
+\end{lstlisting}
+
+\begin{itemize}
+\item {\tt -roidef\_fn ROI\_DEFINITION\_FILE}
+
+file containing ROI definition (see {\it Input file formats} section). If no ROI is specified the similarity is computed across all voxels shared between query and target expression patterns.
+
+\item {\tt -xpz\_query\_list\_fn FILENAME}
+
+file containing a list of XPZ files to use as query patterns; either xpz\_query\_fn or xpz\_query\_list\_fn must be specified.
+
+\item {\tt -xpz\_query\_fn FILENAME}
+
+XPZ file to use as query patterns; either xpz\_query\_fn or xpz\_query\_list\_fn must be specified.
+
+\item {\tt -xpz\_query\_target\_fn FILENAME} (optional)
+
+file containing a list of XPZ files to search against. if not specified will search against all XPZ files.
+
+\item {\tt -lrcheck $<$0$|$1$>$} (optional)
+
+if 1, creates L/R copies of all defined ROI, and separately computes expression similarity values within each side.
+
+\item {\tt -cluster\_fl $<$0$|$1$>$} (optional)
+
+if 1 will run the query in parallel using an SGE computing cluster, as specified in SGE.pm
+
+\item {\tt -out\_fn $<$OUTPUT FILE NAME$>$} (optional)
+
+specifies the output file name; if not specified will display to a generic filename: `results\_simsearch.XXXXX.out'
+
+\item {\tt -age AGE}
+
+Specifies the developmental stage, one of: E11.5, E13.5, E15.5, E18.5, P4, P14, P28, P56 (or adult). If not specified, defaults to adult.
+
+\item {\tt -plane PLANE} (optional)
+
+Specify a plane to restrict queries to those dataseries, one of: coronal or sagittal. If not specified, no restriction on plane.
+
+\end{itemize}
+
+\subsection{(\textcolor{red}{EXPERIMENTAL}) {\tt make\_report}: Format search results for easy viewing}
+NOTE: Requires a local mirror of the atlas and expression files.
+
+This run mode formats search results into an HTML file that optionally retrieves 2D ISH images from the region(s) of interest.
+
+\begin{lstlisting}
+perl allenminer.pl -mode make_report -roidef_fn ROI_DEFINITION_FILE -search_results_fn SEARCH\_RESULTS_FILE -age AGE -out_prefix OUTPUT_FILE_PREFIX [-get_images IMAGESTORETRIEVE] [-num_images NUMIMAGES] [-sortby SORTFIELD] [-query_plane PLANE] [-hit_plane PLANE] [-plane PLANE]
+\end{lstlisting}
+
+\begin{itemize}
+\item {\tt -roidef\_fn ROI\_DEFINITION\_FILE}
+
+file containing ROI definition (see {\it Input file formats} section).
+
+\item {\tt -search\_results\_fn SEARCH\_RESULTS\_FILE}
+
+name of file containing search results to be formatted.
+
+\item {\tt -age AGE}
+
+Specifies the developmental stage, one of: E11.5, E13.5, E15.5, E18.5, P4, P14, P28, P56 (or adult). If not specified, defaults to adult.
+
+\item {\tt -query\_plane $<$coronal$|$sagittal$>$}
+
+If simsearch, only format results where query data series is from the specified sectioning plane.
+
+\item {\tt -hit\_plane $<$coronal$|$sagittal$>$}
+
+If simsearch, only format results where hit data series is from the specified sectioning plane.
+
+\item {\tt -plane $<$coronal$|$sagittal$>$}
+
+If not simsearch, only format results where hit data series is from the specified sectioning plane.
+
+\item {\tt -sortby SORTFIELD}
+
+Optionally specify field on which to sort results. This field must match one of the column names listed in the header line of the results file. If not specified, uses reasonable defaults.
+
+\end{itemize}
+
+
+\subsection{{\tt roiop}: ROI operations}
+This run mode performs several operations on one or more ROI.
+
+\subsubsection*{{\tt peel}: Peel the edges of an ROI }
+
+Removes the specified number of edge layers from an ROI, like peeling a layer from an onion. It can be useful for reducing the effects of edge mis-registration artifacts.\\
+
+\begin{lstlisting}
+perl allenminer.pl -mode roiop -type peel -roidef_fn ROI_DEFINITION_FILE -layers NUMBER_OF_LAYERS -out_fn NEWROI_DEFINITION_FILE [-age AGE]
+\end{lstlisting}
+
+\begin{itemize}
+\item {\tt -age AGE}
+
+Specifies the developmental stage, one of: E11.5, E13.5, E15.5, E18.5, P4, P14, P28, P56 (or adult). If not specified, defaults to adult.
+
+\end{itemize}
+
+\subsubsection*{{\tt flip}: Flip an ROI about the mid-sagittal plane}
+
+Flips an ROI about the mid-sagittal plane. This is useful for analyzing expression within named brain regions of the right hemisphere, since the ABA region definitions refer only to the left hemisphere.\\
+
+\begin{lstlisting}
+perl allenminer.pl -mode roiop -type flip -roidef_fn ROI_DEFINITION_FILE -out_fn NEWROI_DEFINITION_FILE [-age AGE]
+\end{lstlisting}
+
+The name of the flipped ROI in the output ROI\_DEFINITION\_FILE is the old name prepended with 'flip\_'.
+
+\begin{itemize}
+\item {\tt -age AGE}
+
+Specifies the developmental stage, one of: E11.5, E13.5, E15.5, E18.5, P4, P14, P28, P56 (or adult). If not specified, defaults to adult.
+
+\end{itemize}
+
+\subsubsection*{{\tt separate\_adjacent}: Remove ROI edges that border neighboring ROIs}
+
+Removes the specified number of edge layers at the border of adjacent ROIs. It can be useful in reducing the effects of edge mis-registration artifacts. This mode is similar in spirit to the {\tt roi\_peel} run mode, but only removes edge voxels that border other ROIs specified in the ROI definition file.
+
+\begin{lstlisting}
+perl allenminer.pl -mode roiop -type separate_adjacent  -roidef_fn ROI_DEFINITION_FILE -layers NUMBER_OF_LAYERS -out_fn NEWROI_DEFINITION_FILE [-age AGE]
+\end{lstlisting}
+
+\begin{itemize}
+\item {\tt -age AGE}
+
+specifies the developmental stage - both for loading the correct reference atlas and for parsing the correct expression files. Must be one of: E11.5, E13.5, E15.5, E18.5, P4, P14, P28, P56 (or adult).
+
+if not specified, defaults to adult.
+\end{itemize}
+
+\subsubsection*{{\tt subtract}: Compute the difference between two ROI}
+
+Creates a new roi definition file describing the difference between roi1 and roi2.
+
+\begin{lstlisting}
+perl allenminer.pl -mode roiop -type subtract -roidef_fn ROI_DEFINITION_FILE -roi1 ROI1NAME -roi2 ROI2NAME -new_name NAMEOFNEWROI [-out_fn NEW_ROI_DEFINITION_FILE] [-age AGE]
+\end{lstlisting}
+
+
+\begin{itemize}
+\item {\tt -roidef\_fn ROI\_DEFINITION\_FILE}
+   
+file containing ROI definition (see {\it Input file formats} section)
+
+\item {\tt -roi1 ROI1NAME}
+   
+name of first ROI
+
+\item {\tt -roi2 ROI2NAME}
+
+name of second ROI
+
+\item {\tt -new\_name NEW\_ROI\_NAME}
+   
+name of difference ROI
+
+\item {\tt -out\_fn NEW\_ROI\_DEFINITION\_FILE} (optional)
+
+name of file to display new ROI to. otherwise displays to STDOUT
+
+\item {\tt -age AGE}
+
+Specifies the developmental stage, one of: E11.5, E13.5, E15.5, E18.5, P4, P14, P28, P56 (or adult). If not specified, defaults to adult.
+
+\end{itemize}
+
+\subsubsection*{{\tt rename}: Rename ROI}
+
+\subsubsection*{{\tt partition}: Generate new ROIs by partitioning an ROI along RC, ML, or DV axes}
+
+\begin{lstlisting}
+perl allenminer.pl -mode roiop -type partition -roidef_fn ROI_DEFINITION_FILE -roi_basename PARTITIONED_ROI_BASENAME_ -numbins NUMBER_OF_BINS -axes <AP|ML|DV> [-fitted_cuts 1] [-age AGE]
+\end{lstlisting}
+
+\begin{itemize}
+\item {\tt -roidef\_fn ROI\_DEFINITION\_FILE}
+   
+file containing ROI definition (see {\it Input file formats} section)
+
+\item {\tt -roi\_basename BASENAME}
+
+specifies the prefix of the name to give to the newly created ROI partitions.
+
+The new ROIs will be named: BASENAME\_partN where N runs from from 0 to $(numbins - 1)$.
+
+\item {\tt -numbins NUMBER\_OF\_BINS}
+
+specifies the number of ROI partitions to create
+
+\item {\tt -axes $<$AP$|$ML$|$DV$>$}
+
+specifies the axis along which to partition the ROI; AP = anteroposterior (or RC = rostro-caudal), ML = mediolateral, DV = dorsoventral.
+
+\item {\tt -fitted\_cuts 1}
+
+optional flag that specifies that ROI partitions should be generated with the space across the partition axis equally split among the partitions. This results in partition edges that adapt to the shape of the ROI. If this option is not specified, the partitions edges are parallel to the axis.
+
+\item {\tt -age AGE}
+
+Specifies the developmental stage, one of: E11.5, E13.5, E15.5, E18.5, P4, P14, P28, P56 (or adult). If not specified, defaults to adult.
+
+\end{itemize}
+
+\subsection{{\tt convert}: Convert between file formats}
+
+\subsubsection*{{\tt roi2pdb}: Convert an ROI definition file to PDB format}
+
+This run mode is useful for visualizing region of interests; {\it eg}, after manipulation.
+
+\begin{lstlisting}
+perl allenminer.pl -mode convert -type roi2pdb -roidef_fn ROI_DEFINITION_FILE -pdb_fn OUTPUT_PDB_FILENAME [-age AGE]
+\end{lstlisting}
+
+\begin{itemize}
+\item {\tt -roidef\_fn ROI\_DEFINITION\_FILE}
+
+file containing ROI definition (see {\it Input file formats} section)
+
+\item {\tt -pdb\_fn OUTPUT\_PDB\_FILENAME}
+
+name of PDB output file
+
+\item {\tt -age AGE}
+
+Specifies the developmental stage, one of: E11.5, E13.5, E15.5, E18.5, P4, P14, P28, P56 (or adult). If not specified, defaults to adult.
+
+\end{itemize}
+
+
+%\subsubsection*{{\tt xpr2pdb}: Convert an XPR file to PDB format}
+%
+%This run mode is useful for visualizing XPR expression files in platforms without ABA BrainExplorer.
+%
+%\begin{lstlisting}
+%perl allenminer.pl -mode convert -type xpr2pdb -xpr_fn XPR_filename -pdb_fn OUTPUT_PDB_FILENAME 
+%\end{lstlisting}
+%
+%\begin{itemize}
+%\item {\tt -xpr\_fn XPR\_FILE\_NAME}
+%
+%name of ABA XPR file to convert
+%
+%\item {\tt -pdb\_fn OUTPUT\_PDB\_FILENAME}
+%
+%name of PDB output file
+%\end{itemize}
+%
+%\subsubsection*{{\tt xprarchive2pdb}: Convert all local XPR files to PDB format}
+%\begin{lstlisting}
+%perl allenminer.pl -mode convert -type xprarchive2pdb -out_dir OUTPUT_PDB_DIRECTORY [-compress_fl 1]
+%\end{lstlisting}
+%
+%\begin{itemize}
+%\item {\tt -out\_dir OUTPUT\_PDB\_DIRECTORY}
+%
+%directory to place the output PDB files
+%
+%\item {\tt -compress\_fl 1}
+%
+%gzip compress the output PDB files.
+%
+%\end{itemize}
+%
+
+\subsubsection*{{\tt xpz2pdb}: Convert an XPZ file to PDB format}
+
+This run mode is useful for visualizing XPZ expression files in platforms without ABA BrainExplorer 2.
+
+\begin{lstlisting}
+perl allenminer.pl -mode convert -type xpz2pdb -xpz_fn XPZ_filename -pdb_fn OUTPUT_PDB_FILENAME 
+\end{lstlisting}
+
+\begin{itemize}
+\item {\tt -xpz\_fn XPZ\_FILE\_NAME}
+
+name of ABA XPZ file to convert
+
+\item {\tt -pdb\_fn OUTPUT\_PDB\_FILENAME}
+
+name of PDB output file
+\end{itemize}
+
+
+%\subsubsection*{{\tt sva2pdb}: Convert an SVA file to PDB format}
+%\begin{lstlisting}
+%perl allenminer.pl -mode convert -type sva2pdb -sva_fn SVA_filename -pdb_fn OUTPUT_PDB_FILENAME 
+%\end{lstlisting}
+%
+%\begin{itemize}
+%\item {\tt -sva\_fn SVA\_FILE\_NAME}
+%
+%name of ABA SVA file to convert
+%
+%\item {\tt -pdb\_fn OUTPUT\_PDB\_FILENAME}
+%
+%name of PDB output file
+%\end{itemize}
+
+
+%\subsubsection*{{\tt xpr2txt}: Convert an XPR file to text format}
+%\begin{lstlisting}
+%perl allenminer.pl -mode convert -type xpr2txt -xpr_fn XPR_filename -out_fn OUTPUT_FILENAME 
+%\end{lstlisting}
+%
+%\begin{itemize}
+%\item {\tt -xpr\_fn XPR\_FILE\_NAME}
+%
+%name of ABA XPR file to convert
+%
+%\item {\tt -out\_fn OUTPUT\_FILENAME}
+%
+%name of output file
+%\end{itemize}
+
+
+\subsubsection*{{\tt xpz2txt}: Convert an XPZ file to text format}
+\begin{lstlisting}
+perl allenminer.pl -mode convert -type xpz2txt -xpz_fn XPZ_filename -out_fn OUTPUT_FILENAME 
+\end{lstlisting}
+
+\begin{itemize}
+\item {\tt -xpz\_fn XPZ\_FILE\_NAME}
+
+name of ABA XPZ file to convert
+
+\item {\tt -out\_fn OUTPUT\_FILENAME}
+
+name of output file
+\end{itemize}
+
+
+
+%\subsubsection*{{\tt sva2txt}: Convert an SVA file to text format}
+%\begin{lstlisting}
+%perl allenminer.pl -mode convert -type sva2txt -sva_fn SVA_filename -out_fn OUTPUT_FILENAME 
+%\end{lstlisting}
+%
+%\begin{itemize}
+%\item {\tt -sva\_fn SVA\_FILE\_NAME}
+%
+%name of ABA SVA file to convert
+%
+%\item {\tt -out\_fn OUTPUT\_FILENAME}
+%
+%name of output file
+%\end{itemize}
+
+
+\subsection{{\tt spinesearch}: Search spinal cord expression patterns}
+
+Searches adult (P56) and developmental (P4) spinal cord expression patterns using flexible query patterns. Results in HTML format, view in a web browser.
+
+\begin{lstlisting}
+perl allenminer.pl -mode spinesearch [-rcbits RCPATTERN] [-dvbits DVPATTERN] [-min_rc INTEGER] [-maxrc INTEGER] [-min_dv INTEGER] [-max_dv INTEGER] [-ignore_missing 1] [-color 0|1] [-out_fn OUTPUT_FILENAME]
+\end{lstlisting}
+
+
+\begin{itemize}
+%\item {\tt -help}
+\item {\tt -rcbits RCPATTERN}
+
+16-character long string of 0,1,or .(wildcard) representing `no expression', 'expression', or either, respectively in rostrocaudal sections of the spinal cord.
+
+Each bit represents one of 4 sections in each of cervical, thoracic, lumbar, sacral/coccygeal regions of the spinal cord.
+
+\item {\tt -dvbits DVPATTERN}
+
+11-character long string of 0,1,or .(wildcard) representing expression in dorso-ventral regions of the spinal cord.
+
+The bits represent:
+\begin{enumerate}
+\item Laminae 1-3
+\item Laminae 4-6
+\item Laminae 7-8
+\item Laminae 9
+\item Intermediolateral Column
+\item Gray Matter
+\item White Matter
+\item Central Canal
+\item Ventral-dorsal Midline in Gray Matter
+\item Radially Arrayed in White Matter
+\item Vascular-like in Gray and White Matter
+\end{enumerate}
+
+
+\item {\tt -min\_rc (1-16).}
+Minimum number of RC bits with expression
+
+\item {\tt -min\_dv (1-11).}
+Minimum number of DV bits with expression
+
+\item {\tt -max\_rc (1-16).}
+Maximum number of RC bits with expression
+
+\item{\tt -max\_dv (1-11).}
+Maximum number of DV bits with expression
+
+\item{\tt -ignore\_missing (0-3)}
+
+0: will treat missing bits as mis-matches (default)
+1: will allow missing bits for '0' and '1' query bits
+2: will allow missing bits for '0' query bits
+3: will allow missing bits for '1' query bits
+
+Bit reminder: 0=no expression, 1=expression, .=wildcard, x=missing data
+
+\item {\tt -color 0|1.}
+0 = don't use color in output; defaults to 1 = use color in output.
+
+\item {\tt -out\_fn OUTPUT\_FILENAME}
+name of output file.
+
+\end{itemize}
+
+\subsection{Runs described in the manuscript}
+
+Several enrichment, patterning, and gradient queries are illustrated in the manuscript describing ALLENMINER (Davis and Eddy, 2009). The associated input and output files are available here:\\\href{https://zenodo.org/record/29427/files/allenminer_manuscript_data.tar.gz}{https://zenodo.org/record/29427/files/allenminer\_manuscript\_data.tar.gz}.
+
+\begin{itemize}
+\item Measure gene expression in the ROI defined in neocortex.roi, using the compute cluster.
+
+\begin{lstlisting}
+perl allenminer.pl -mode search -roidef_fn neocortex.roi -cluster_fl 1 -out_fn neocortex.search_results.txt
+\end{lstlisting}
+
+\item Create 5 fitted mediolateral bins from the ROI defined in cp.roi; name the new ROIs using a prefix of `CP\_5MLbins\_'
+
+\begin{lstlisting}
+perl allenminer.pl -mode roiop -type partition -roidef_fn cp.roi -roi_basename CP_5MLbins_ -numbins 5 -axes ML -fitted_cuts 1 > cp_MLbins.roi
+\end{lstlisting}
+
+\item Calculate the patterning/gradient of expression entropy across the 5 CP ROI
+
+\begin{lstlisting}
+perl allenminer.pl -mode search -patterning 1 -roidef_fn CP_MLbins.roi -out_fn CP_5MLbins.search_results.txt
+\end{lstlisting}
+
+\item Convert ROI defined in neocortex.roi into PDB format neocortex.roi.pdb
+
+\begin{lstlisting}
+perl allenminer.pl -mode convert -type roi2pdb -roidef_fn neocortex.roi -pdb_fn neocortex.roi.pdb
+\end{lstlisting}
+
+\end{itemize}
+
+\section{Input file formats}
+\subsection{ROI definition file}
+This file specifies one or multiple ROI. The {\tt example} directory has an example file.
+
+It is a tab-delimited file with the following fields:
+\begin{enumerate}
+\item ROI name - required
+\item ROI subname - optional, leave blank if don't want to use it
+\item type of definition - one of: point, brainstrx, boxbounds
+\item if point: x,y,z in Allen BrainExplorer (and .XPR) coordinates
+
+if brainstrx: either a single abbreviation from Allen Brain Atlas (eg CTX) or if want to specify a subset, as follows: CTX=on,OLF=off,HPF=off
+
+if boxbounds: one of xmin, xmax, ymin, ymax, zmin, or zmax - if an axes bound is not defined, extends to edge of axes.
+
+\item (if boxbounds): number value or equation defining the axis boundary
+   \begin{itemize}
+      \item eg, `10' to specify a hard upper axis limit of 10
+      \item eg, `y * 0.5' to specify a y-dependent axis limit of half the y value
+   \end{itemize}
+\end{enumerate}
+
+If multiple lines are specified with the same ROI name, they get appended onto the ROI definition.
+
+\subsection{Query specs file for {\tt fastsearch} run mode}
+
+The query\_specs file is a tab-delimited file with the following fields:
+\begin{enumerate}
+   \item query name: arbitrary label for labeling the output. Ideally don't include spaces.
+   \item query type: either `enrichment' or `level' depending on whether you would like a ROI enrichment score or expression level
+   \item roi1: ABA atlas region name ({\it eg}, CP for caudoputamen)
+   \item roi2: specify a second ROI - only required if this is an enrichment query: will compute the relative enrichment of each gene in roi1 vs roi2.
+\end{enumerate}
+
+
+\section{Output file formats}
+These are also provided as commented header lines at the start of the files.
+
+\subsection{search: main results}
+
+Three possible entry types (E = expression levels, P = patterning information, S = ROI partition-specific expression levels)
+
+\subsubsection{Expression level entries}
+
+\begin{enumerate}
+\item `E' - record type
+\item gene name
+\item plane: coronal or sagittal
+\item XPZ file name
+\item ROI name; 'internal\_background' refers to the whole brain
+\item number of voxels in the ROI definition
+\item number of voxels reported in the XPZ file within the ROI (in newest XPZ data format, all voxels have data, even if not registered as expressing)
+\item total intensity over all ROI voxels
+\item average intensity (total / number of ROI voxels)
+\item total density
+\item average density
+\item total energy
+\item average energy
+\item ROI specificity of intensity (relative to the whole brain)
+\item ROI specificity of normalized intensity (relative to the whole brain)
+\item ROI specificity of density (relative to the whole brain)
+\item ROI specificity of normalized density (relative to the whole brain)
+\item ROI specificity of energy (relative to the whole brain)
+\item ROI specificity of normalized energy (relative to the whole brain)
+\item ROI specificity of number of registered voxels (relative to the whole brain)
+\end{enumerate}
+
+\subsubsection{Patterning entries}
+\begin{enumerate}
+\item `P' - record type
+\item gene name
+\item plane
+\item XPZ file name
+\item ROI basename
+\item total ROI energy level
+\item number of point information content - ``number of point'' or ``number of voxel'' measures are likely no longer useful, because the new XPZ expression files have a point for all voxels in the atlas space, even when no expression is observed.
+\item normalized number of point information content
+\item number of points gradient numerator
+\item number of points gradient denominator
+\item number of points gradient score
+
+\item density information content
+\item normalized density information content
+\item density gradient numerator
+\item density gradient denominator
+\item density gradient score
+
+\item intensity information content
+\item normalized intensity information content
+\item intensity gradient numerator
+\item intensity gradient denominator
+\item intensity gradient score
+
+\item energy information content
+\item normalized energy information content
+\item energy gradient numerator
+\item energy gradient denominator
+\item energy gradient score
+
+\end{enumerate}
+
+\subsubsection{Partition-specific expression level entries}
+
+\begin{enumerate}
+\item `S' - record type
+\item gene name
+\item plane
+\item XPZ file name
+\item ROI name
+\item numpoints bin specificity - again, number of point measures unlikely to be useful.
+\item numpoints bin enrichment
+\item numpoints bin value
+\item numpoints total value
+
+\item density bin specificity
+\item density bin enrichment
+\item density bin value
+\item density total value
+
+\item intensity bin specificity
+\item intensity bin enrichment
+\item intensity bin value
+\item intensity total value
+
+\item energy bin specificity
+\item energy bin enrichment
+\item energy bin value
+\item energy total value
+\end{enumerate}
+
+\subsection{search: xyz\_details files}
+
+Expression measures listed in the original XPZ file at any voxels in the ROI.
+
+Tab-delimited:
+\begin{enumerate}
+\item ROI
+\item X coordinate
+\item Y coordinate
+\item Z coordinate
+\item Intensity level
+\item Density of expressors
+\item Energy (intensiy * density)
+\end{enumerate}
+
+\subsection{simsearch}
+Tab-delimited:
+\begin{enumerate}
+\item `SIM' - denotes entry type
+\item Query file
+\item Query gene
+\item Query plane (coronal or sagittal)
+\item Hit file 
+\item Hit gene
+\item Hit plane
+\item ROI name
+\item Similarity score
+\item p-value (IGNORE)
+\item Number of `shared' cubes (voxels) with expression registered in both query and hit files.
+\item Mean query expression level in shared cubes.
+\item Mean hit expression level in shared cubes.
+\end{enumerate}
+
+
+\subsection{fastsearch}
+
+Two types of records: ``F'' for single ROI levels, ``FE'' for ROI1-vs-ROI2 enrichment query.
+
+
+\subsubsection{Single ROI results}
+\begin{enumerate}
+\item `F' - record type
+\item XPZ file name
+\item plane
+\item query name
+\item query type
+\item ROI name
+\item ROI density
+\item ROI intensity
+\item ROI energy
+\end{enumerate}
+
+
+\subsubsection{ROI1-vs-ROI2 results}
+\begin{enumerate}
+\item `FE' - record type
+\item XPZ file name
+\item plane
+\item query name
+\item query type
+\item ROI1 name
+\item ROI1 density
+\item ROI1 intensity
+\item ROI1 energy
+\item ROI2 name
+\item ROI2 density
+\item ROI2 intensity
+\item ROI2 energy
+\item density enrichment
+\item intensity enrichment
+\item energy enrichment
+\end{enumerate}
+
+
+\subsection{spinesearch}
+
+HTML file viewable in any web browser:
+
+\begin{enumerate}
+\item hit number
+\item Gene name (linked to ABA server)
+\item Age
+\item rostro-caudal pattern
+\item dorsoventral pattern
+\item ABA Imageseries identifer (linked to ABA server)
+\end{enumerate}
+
+
+\section{Citing ALLENMINER}
+A tool for identification of genes expressed in patterns of interest using the Allen Brain Atlas.\\Fred P. Davis and Sean R. Eddy. {\it Bioinformatics} (2009). 25(13):1647-54. \href{http://dx.doi.org/10.1093/bioinformatics/btp288}{doi:10.1093/bioinformatics/btp288}
+
+\section{Contact Information}
+
+Fred P. Davis\\
+web: \href{http://fredpdavis.com}{http://fredpdavis.com}\\
+email: fredpdavis@gmail.com
+
+\end{document}

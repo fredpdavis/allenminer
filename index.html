@@ -1,0 +1,78 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Allenminer by fredpdavis</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/github-light.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1>Allenminer</h1>
+        <p>flexible tool to search allen brain atlases</p>
+
+        <p class="view"><a href="https://github.com/fredpdavis/allenminer">View the Project on GitHub <small>fredpdavis/allenminer</small></a></p>
+
+
+        <ul>
+          <li><a href="https://github.com/fredpdavis/allenminer/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/fredpdavis/allenminer/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/fredpdavis/allenminer">View On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <h2>
+<a id="allenminer---a-tool-for-identification-of-genes-expressed-in-patterns-of-interested-using-the-allen-brain-atlas" class="anchor" href="#allenminer---a-tool-for-identification-of-genes-expressed-in-patterns-of-interested-using-the-allen-brain-atlas" aria-hidden="true"><span class="octicon octicon-link"></span></a>ALLENMINER - a tool for identification of genes expressed in patterns of interested using the Allen Brain Atlas.</h2>
+
+<h3>
+<a id="what-is-allenminer" class="anchor" href="#what-is-allenminer" aria-hidden="true"><span class="octicon octicon-link"></span></a>What is ALLENMINER?</h3>
+
+<p>ALLENMINER searches gene expression in the adult and developing mouse brain and spinal cord atlases published by the Allen Institute for Brain Science (<a href="http://www.alleninstitute.org/">AIBS</a>). It can identify genes that are (1) expressed, (2) expressed specifically, (3) expressed non-uniformly, (4) expressed in a graded fashion, or (5) expressed in a pattern similar to a query gene, in a user-specified region of interest of the mouse brain -- specified either as a set of brain region names or as x,y,z bounds of a cuboid.</p>
+
+<p>The code includes several routines for processing Allen Brain Atlas (ABA) data files, including the 3D expression data and the adult and developing reference atlases. Besides accessing the raw data, these routines are useful for visualizing ABA expression files on platforms where the ABA BrainExplorer application is not available, such as GNU/Linux. For example, all ABA expression files can be converted to <a href="http://www.pdb.org">PDB</a> (protein data bank) format for visualization in protein structure viewers, such as <a href="http://pymol.org">PyMOL</a>.</p>
+
+<p>For more details take a look at the users manual.</p>
+
+<h3>
+<a id="whats-new-in-v201-2012-nov-27" class="anchor" href="#whats-new-in-v201-2012-nov-27" aria-hidden="true"><span class="octicon octicon-link"></span></a>What's new in v2.01? (2012 Nov 27)</h3>
+
+<p>Updated to latest adult mouse brain atlas (v3).</p>
+
+<h3>
+<a id="what-was-new-in-v20-2012-april-13" class="anchor" href="#what-was-new-in-v20-2012-april-13" aria-hidden="true"><span class="octicon octicon-link"></span></a>What was new in v2.0? (2012 April 13)</h3>
+
+<ol>
+<li>Easier to install. No longer requires Python, any CPAN packages, or the (now outdated) ABA API package.</li>
+<li>Searches the latest atlases: ABA adult (v2.0; Nov 2011 release) and developing mouse brain atlases (v3.0; Nov 2011 release); adult and developing spinal cord atlases.</li>
+<li>Easier to view results. Experimental mode (make_report) formats search results along with original 2D ISH images for viewing in a web browser.</li>
+</ol>
+
+<h3>
+<a id="external-software" class="anchor" href="#external-software" aria-hidden="true"><span class="octicon octicon-link"></span></a>External Software</h3>
+
+<p>The program requires four programs, usually installed on most machines: <a href="http://www.perl.org">Perl</a>, <a href="http://www.gnu.org/software/wget">wget</a>, unzip, and gzip.
+Mac OS/X machines may not have wget by default, so check and download if necessary.
+<a href="http://www.pymol.org/">PyMol</a> or other PDB viewers are useful to visualize ROI partition definitions when performing a graded or patterning query.</p>
+
+<h3>
+<a id="citing-allenminer" class="anchor" href="#citing-allenminer" aria-hidden="true"><span class="octicon octicon-link"></span></a>Citing ALLENMINER</h3>
+
+<p><a href="http://dx.doi.org/10.1093/bioinformatics/btp288">A tool for identification of genes expressed in patterns of interest using the Allen Brain Atlas.</a>
+F. P. Davis and S. R. Eddy. Bioinformatics 2009.</p>
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/fredpdavis">fredpdavis</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+    
+  </body>
+</html>

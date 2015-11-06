@@ -51,7 +51,7 @@ sub _run_download_data {
    print STDERR "Your data directory is currently set to: ".
       $specs->{allen_data_dir}."\n\n".
       "To change this, exit and type the full path to your desired ".
-      "allen_data_dir on line 65 of Allenminer2.pm\n\n".
+      "allen_data_dir on line 65 of alnmnr.pm\n\n".
       "To continue with the current path, type Y: " ;
 
    my $answer = <STDIN> ; chomp $answer;
@@ -384,6 +384,7 @@ sub make_adult_xpz_list {
    my $xpz_list = {};
    print STDERR "Retrieving list of expression files: ";
    foreach my $term (@terms) {
+      print STDERR "." ;
       my $initsearch_url =
          $specs->{download}->{URL}->{adult_search_part1}.$term.
          $specs->{download}->{URL}->{adult_search_part2}.'0'.
@@ -425,10 +426,13 @@ sub make_adult_xpz_list {
 
          aba_parse_adult_search_results({ fn => $t_fn, hits => $xpz_list }) ;
          unlink $t_fn ;
-#         print STDERR "search $j HITS: $t_fn\n";
       }
    }
    print STDERR "X\n";
+   print STDERR "X\n";
+
+   if (!-s $specs->{allen_xpz_dir}) {
+      File::Path::mkpath($specs->{allen_xpz_dir}) ; }
 
    open(OUTF, ">".$specs->{download}->{fn}->{adult_xpz_list}) ;
    my @headers = qw/gene gene-id name entrez-id imageseries-id/;

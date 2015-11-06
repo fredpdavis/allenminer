@@ -2,9 +2,9 @@
 ALLENMINER: a tool for identification of genes expressed in patterns of
               interest using the Allen Brain Atlas
 
-v2.01. Nov 27, 2012.
+v2.1. Oct 30, 2015.
 
-Copyright 2008, 2012  Fred P. Davis
+Copyright 2008, 2012, 2015  Fred P. Davis
 ----------------------------------------------------------------------------
 
 
@@ -28,29 +28,12 @@ GNU/Linux). For example, all ABA expression files can be converted to PDB
 (protein data bank) format for visualization in protein structure viewers, such
 as PyMOL (http://pymol.org).
 
-I developed ALLENMINER as a postdoc at the HHMI Janelia Research Campus.
+I started developing ALLENMINER at the HHMI Janelia Research Campus and continue
+to maintain it now at NIH/NIAMS.
 
-o What is new in ALLENMINER v2.01?
+o What is new in ALLENMINER v2.1?
 
-Updated to latest adult mouse brain atlas (v3).
-
-o What was new in ALLENMINER v2.0?
-
-1. It was udpated to reflect changes in the Allen Brain Atlas:
-
- *  The latest adult brain reference atlas (v2) offers nearly 600 more brain
-    region definitions than the previous version.
-
- *  The file formats and web data accessibility have changed slightly. For
-    example, the main 3D adult data is no longer released in XPR file format,
-    but instead uses a format similar to the XPZ used by the old developing
-    atlas (which is also now deprecated). The old parsing routines are kept
-    for legacy data and for other datasets that havent migrated yet, such as
-    the sleeping mouse study.
-
-2. Spinal expression database can now be searched using flexible queries.
-
-3. Easier to install and run
+Updated to the latest ABA releases of the adult (v7) and developing (v6) atlases
 
 
 o Documentation

@@ -62,7 +62,7 @@ sub getspecs {
 #----- EDIT THIS SECTION TO SPECIFY YOUR LOCAL CONFIGURATION ------------
 #
    $specs->{allen_data_dir} =
-      '/Users/davisf/software/allenminer_v2/data' ;
+      '/gpfs/gsfs4/users/davisfp/github.repos/allenminer/data' ;
 
    $specs->{cluster}->{cluster_mode} = 0 ; # Use cluster by default? 1=yes, 0=no
    $specs->{cluster}->{head_node} = 'login-eddy' ; # Name of head node
@@ -215,9 +215,9 @@ sub getspecs {
          devel_xpz =>
             "http://developingmouse.brain-map.org/grid_data/visualize/",
          devel_atlas => "http://www.brain-map.org/BrainExplorer2/".
-                     "Atlases/Developing_Mouse_3.zip",
+                     "Atlases/Developing_Mouse_6.zip",
          adult_atlas => "http://www.brain-map.org/BrainExplorer2/".
-                     "Atlases/Mouse_Brain_3.zip",
+                     "Atlases/Mouse_Brain_7.zip",
          spinalcord_part1 =>
             'http://mousespinal.brain-map.org/imageseries/list/',
          spinalcord_part2 => 

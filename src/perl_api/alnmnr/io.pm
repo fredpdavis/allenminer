@@ -1420,7 +1420,7 @@ sub downsample_aba_Annotation {
 =head2 load_aba_brainstructures()
 
    Title:       load_aba_brainstructures()
-   Function:    loads the ABA's brainstructure.csv file
+   Function:    loads the ABA Atlas's ontology2.csv file
    Args:        $_->{fn} [optional - if not will call set_locations()]
    Returns:     $_->{abbreviation2ID}->{abbreviation} = informaticsId ;
                 $_->{ID2info}->{informaticsId} = {
@@ -1433,7 +1433,7 @@ sub downsample_aba_Annotation {
                   informaticsId =>,
                   StructureId =>,
                 }
-   Files in:    brainstructures.csv
+   Files in:    ontology2.csv
 
 =cut
 
@@ -1452,27 +1452,28 @@ sub load_aba_brainstructures {
       $fn = $in->{fn} ;
    } else {
       if ($in->{age} eq 'P56') {
-#fpd111122_0644          $fn = $specs->{fn}->{brainstructures} ;
-         $fn = $specs->{allen_adult_atlas_dir}.'/ontology.csv' ;
+         $fn = $specs->{allen_adult_atlas_dir}.'/ontology2.csv' ;
       } else {
-         $fn = $specs->{allen_devel_atlas_dir}.'/ontology.csv' ;
+         $fn = $specs->{allen_devel_atlas_dir}.'/ontology2.csv' ;
       }
    }
 
    if (!-s $fn) {
-      die "Can't find brainstructures.csv, expecting: ".$fn ; }
+      die "Can't find ontology2.csv, expecting: ".$fn ; }
 
    open(INF, $fn) ;
 
-   my @fields ;
-   my $f2i ;
-#   if ($in->{age} eq 'adult') { #brainstructures.csv has a header line
-#      my $header = <INF> ;
-#      @fields = split(/\,/ , $header) ;
-#   } else { #These are my inferred headers for ontology.csv
-      @fields = qw/StructureName Abbreviation ParentStruct red green blue informaticsId unk1 unk2 ontology_level/ ;
-#   }
+# format for ontology.csv, pre-2015May14:
+#   my @fields = qw/StructureName Abbreviation ParentStruct red green blue informaticsId unk1 unk2 ontology_level/ ;
 
+# ABA Atlas ontology2.csv from release May 14,2015: 
+#  name,abbreviation,parent,mesh_name,red,green,blue,id,database_id,order,level
+#  "Basic cell groups and regions","grey",,"grey_8",191,218,227,1,8,0,99
+#  "Cerebrum","CH",8,"CH_567",176,240,255,2,567,2,99
+   my $header_line = <INF>; chomp $header_line ;
+   my @fields = qw/StructureName Abbreviation ParentStruct MeshName red green blue unk1 informaticsId unk2 ontology_level/ ;
+
+   my $f2i = {};
    foreach my $j ( 0 .. $#fields) {
       $f2i->{$fields[$j]} = $j; }
 

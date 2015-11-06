@@ -1612,7 +1612,7 @@ th {
 
       print {$html_fh} "</table>$navbar</body></html>\n" ;
       close($html_fh) ;
-      close(ROIRESF) ;
+      close(SPLITRESF) ;
    }
 
 }

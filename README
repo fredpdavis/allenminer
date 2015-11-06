@@ -2,7 +2,7 @@
 ALLENMINER: a tool for identification of genes expressed in patterns of
               interest using the Allen Brain Atlas
 
-v2.1. Oct 30, 2015.
+Nov 6, 2015.
 
 Copyright 2008, 2012, 2015  Fred P. Davis
 ----------------------------------------------------------------------------
@@ -28,12 +28,20 @@ GNU/Linux). For example, all ABA expression files can be converted to PDB
 (protein data bank) format for visualization in protein structure viewers, such
 as PyMOL (http://pymol.org).
 
-I started developing ALLENMINER at the HHMI Janelia Research Campus and continue
-to maintain it now at NIH/NIAMS.
+I began to develop ALLENMINER at the HHMI Janelia Research Campus and continue
+to maintain it at NIH/NIAMS.
 
-o What is new in ALLENMINER v2.1?
+o What's new?
 
 Updated to the latest ABA releases of the adult (v7) and developing (v6) atlases
+
+
+o NEWS: PRE-RELEASE VERSION: 2015 Nov 6
+---------------------------------------
+
+* WARNING: The fastsearch indices for this pre-release version have not been
+  created yet -- until I do so, you must download the entire expression atlas
+  to use ALLENMINER.
 
 
 o Documentation

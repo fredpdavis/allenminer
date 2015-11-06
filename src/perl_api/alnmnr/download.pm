@@ -76,6 +76,8 @@ sub _run_download_data {
 
    } elsif ($in->{atlas} eq 'fastsearch') {
 
+      die "ERROR: The fastsearch indices for this version of ALLENMINER are ".
+          "not ready yet." ;
       download_fastsearch_data({specs => $specs}) ;
 
    } else {
@@ -175,50 +177,79 @@ sub download_develbrain_data {
 
    my $ages = {}; map {$ages->{$_} = 1;} qw/E11.5 E13.5 E15.5 E18.5 P4 P14 P28/;
 
+#need to search for terms explicitly
+   my @terms ; push @terms, 0 .. 9; push @terms, 'A' .. 'Z' ;
+
    print STDERR "Retrieving developing brain expression files:\n";
    print STDERR "   Getting gene list: ";
-   my ($out_fh, $out_fn) ;
-   my $numpages ;
    my $gene_info = {};
-   {
-      ($out_fh->{xml}, $out_fn->{xml}) = tempfile() ; close($out_fh->{xml}) ;
-      my $tcom = "wget -q '".$specs->{download}->{URL}->{devel_gene_list}.
-                 "' -O ".$out_fn->{xml} ;
-      system($tcom) ;
-      open(P1, $out_fn->{xml}) ;
-      while (my $line = <P1>) {
-         if ($line =~ /total-pages/) {
-            chomp $line;
-            ($numpages) = ($line =~ /total-pages='([0-9]+)'/) ;
-            last;
+   foreach my $term (@terms) {
+      print STDERR "$term" ;
+      my ($out_fh, $out_fn) ;
+      my $num_hits;
+
+# Have to switch to adult atlas-like per-term search, grep number of rows, then
+#  grab them chunk by chunk.
+
+      my $initsearch_url =
+         $specs->{download}->{URL}->{devel_search_part1}."*$term*".
+         $specs->{download}->{URL}->{devel_search_part2}."0".
+         $specs->{download}->{URL}->{devel_search_part3}."5".
+         $specs->{download}->{URL}->{devel_search_part4} ;
+
+      {
+         ($out_fh->{xml}, $out_fn->{xml}) = tempfile() ; close($out_fh->{xml}) ;
+         my $tcom = "wget -q '$initsearch_url' -O ".$out_fn->{xml} ;
+         system($tcom) ;
+         open(P1, $out_fn->{xml}) ;
+         while (my $line = <P1>) {
+            if ($line =~ /total_rows/) {
+               chomp $line;
+               ($num_hits) = ($line =~ /total_rows='([0-9]+)'/) ;
+               last;
+            }
          }
-      }
-      close(P1) ;
-      aba_parse_devel_xml({xml_fn    => $out_fn->{xml},
-                           gene_info => $gene_info});
-      unlink $out_fn->{xml} ;
-   }
+         close(P1) ;
 
-#   print STDERR "DEBUG MODE DOWNLOAD ONLY 2 PAGES OF GENES\n"; $numpages = 2 ;
-   foreach my $pagenum ( 2 .. $numpages) {
-      ($out_fh->{xml}, $out_fn->{xml}) = tempfile() ; close($out_fh->{xml}) ;
-      my $tcom = "wget -q '".$specs->{download}->{URL}->{devel_gene_list}.
-                 "&page=$pagenum' -O ".$out_fn->{xml} ;
-      system($tcom) ;
-      if (!-s $out_fn->{xml}) {
-         print STDERR "ERROR: couldn't download developmental gene ".
-                      "list XML file: $tcom\n" ;
-         die ;
+         unlink $out_fn->{xml} ;
       }
 
-      aba_parse_devel_xml({xml_fn    => $out_fn->{xml},
-                           gene_info => $gene_info});
-      unlink $out_fn->{xml} ;
+
+
+      if ($num_hits == 0) { next;}
+      my $num_chunks = POSIX::ceil($num_hits /
+                        $specs->{download}->{devel_xpz_search_chunk}) ;
+
+      foreach my $j ( 0 .. $num_chunks) {
+         my $startrow = $j * $specs->{download}->{devel_xpz_search_chunk} ;
+         my $search_url =
+               $specs->{download}->{URL}->{devel_search_part1}."*$term*".
+               $specs->{download}->{URL}->{devel_search_part2}.$startrow.
+               $specs->{download}->{URL}->{devel_search_part3}.
+                  $specs->{download}->{devel_xpz_search_chunk}.
+               $specs->{download}->{URL}->{devel_search_part4} ;
+
+         my ($t_fh, $t_fn) = tempfile() ; close($t_fh) ;
+         my $tcom = "wget -q \'$search_url\' -O $t_fn" ;
+         system($tcom) ;
+
+         if (!-s $t_fn) {
+            print STDERR "ERROR: couldn't download developmental gene ".
+                         "list XML file: $tcom\n" ;
+            die ;
+         }
+
+         aba_parse_devel_xml({ xml_fn    => $t_fn,
+                               gene_info => $gene_info}) ;
+         unlink $t_fn ;
+      }
    }
    chdir $curdir ;
    rmdir $tempdir ;
-   print STDERR "X\n";
+   print STDERR ". X\n";
 
+
+   my ($out_fh, $out_fn) ;
    ($out_fh->{devel_wget}, $out_fn->{devel_wget}) =
       tempfile("allen_devel_wget.XXXXX", SUFFIX => '.out') ;
 
@@ -307,6 +338,111 @@ sub download_develbrain_data {
 =cut
 
 sub aba_parse_devel_xml {
+
+   my $in = shift;
+   my $xml_fn = $in->{xml_fn} ;         #XML file to parse
+   my $gene_info = $in->{gene_info} ;   #->{gene_symbol}->{imageseries}->[i]=
+                                        # {imageseries_id|age|slices}
+                                        #
+   my $ageid2text = {
+      1 => 'E18.5',
+      2 => 'E15.5',
+      4 => 'E13.5',
+      5 => 'E11.5',
+      7 => 'P4',
+      11 => 'P14',
+      14 => 'P28',
+      15 => 'P56'
+   } ;
+
+   my $planeid2text = {
+      1 => 'coronal',
+      2 => 'sagittal'
+   } ;
+
+   my $cur_gene = {};
+   my $cur_imageseries = {};
+
+   open(SEARCHRESF, $in->{xml_fn}) ;
+   while (my $line = <SEARCHRESF>) {
+      chomp $line;
+
+      if ($line =~ /^ {4}<id>/) {                                       #GOOD
+         ($cur_gene->{id}) = ($line =~ /^    <id>(.+)<\/id>$/) ;
+
+      } elsif ($line =~ /^ {4}<name>/) {                                #GOOD
+         ($cur_gene->{name}) = ($line =~ /<name>(.+)<\/name>$/) ;
+
+      } elsif ($line =~ /^ {4}<entrez-id>/) {                           #GOOD
+         ($cur_gene->{"entrez-id"}) =
+            ($line =~ /<entrez-id>(.+)<\/entrez-id>$/) ;
+
+      } elsif ($line =~ /^ {4}<acronym>/) {                             #GOOD
+         ($cur_gene->{"gene-symbol"}) =
+            ($line =~ /<acronym>(.+)<\/acronym>$/) ;
+
+      } elsif ($line =~ /^ {8}<id type="integer">/) {                   #GOOD
+         ($cur_imageseries->{id}) =
+            ($line =~ /<id type="integer">(.+)<\/id>$/) ;
+
+      } elsif ($line =~ /^ {8}<plane-of-section-id type="integer">/) { #GOOD
+         my ($plane_id) =
+            ($line =~ /<plane-of-section-id type="integer">(.+)<\/plane-of-section-id>$/) ;
+
+         ($cur_imageseries->{"plane-of-section"}) = $planeid2text->{$plane_id};
+
+      } elsif ($line =~ /^ {12}<age-id type="integer">/) {              #GOOD
+         my ($age_id) =
+            ($line =~ /<age-id type="integer">(.+)<\/age-id>$/) ;
+         ($cur_imageseries->{"age"}) = $ageid2text->{$age_id};
+
+      } elsif ($line =~ /^ {8}<failed type="boolean">/) {               #GOOD
+         ($cur_imageseries->{"failed"}) =
+            ($line =~ /<failed type="boolean">(.+)<\/failed>$/) ;
+
+      } elsif ($line =~ /^      <\/data-set>$/) {                       #GOOD
+         if (!exists $gene_info->{$cur_gene->{"gene-symbol"}}) {
+            $gene_info->{$cur_gene->{"gene-symbol"}}->{imageseries} = {} ;
+            foreach my $gene_feat (keys %{$cur_gene}) {
+               $gene_info->{$cur_gene->{"gene-symbol"}}->{$gene_feat} =
+                  $cur_gene->{$gene_feat} ; } }
+
+         if (!exists $gene_info->{$cur_gene->{"gene-symbol"}}->{imageseries}->{$cur_imageseries->{id}}) {
+            foreach my $image_series_feat (keys %{$cur_imageseries}) {
+$gene_info->{$cur_gene->{"gene-symbol"}}->{imageseries}->{$cur_imageseries->{id}}->{$image_series_feat}=
+                  $cur_imageseries->{$image_series_feat} ;
+            }
+         }
+
+         $cur_imageseries= {} ;
+
+      } elsif ($line =~ /  <\/gene>$/) {
+         $cur_gene = {} ;
+      }
+
+   }
+   close(SEARCHRESF) ;
+
+   return ;
+
+}
+
+
+=head2 PRE20150514_aba_parse_devel_xml()
+
+   Title:       PRE20150514_aba_parse_devel_xml() -- DEPRECATED
+   Function:    Parses developmental ABA XML files to get gene/stage/imageseries
+   Args:        ->{xml_fn} = XML filenmae 
+                ->{gene_info} = hash to hold output
+   Returns:     Nothing
+   Output:      $in->{gene_info}->{gene-symbol}->{imageseries}->[i] =
+                  { imageseries_id =>
+                    age            =>
+                    slices         => }
+
+=cut
+
+sub PRE20150514_aba_parse_devel_xml {
 
    my $in = shift;
    my $xml_fn = $in->{xml_fn} ;         #XML file to parse

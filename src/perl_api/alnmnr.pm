@@ -57,7 +57,7 @@ use alnmnr::runs ;
 
 sub getspecs {
 
-   my $specs = {"version" => "2.01"} ;
+   my $specs = {"version" => "2.1"} ;
 
 #----- EDIT THIS SECTION TO SPECIFY YOUR LOCAL CONFIGURATION ------------
 #
@@ -189,6 +189,7 @@ sub getspecs {
 
    $specs->{download} = {
       adult_xpz_search_chunk => 200,
+      devel_xpz_search_chunk => 100,
       URL => {
          interactive_imageseries => 'http://mouse.brain-map.org/experiment/show/',
 # http://mouse.brain-map.org/experiment/show/75492683
@@ -209,11 +210,15 @@ sub getspecs {
             'http://mouse.brain-map.org/grid_data/v1/search/gene?term=',
          adult_search_part2 => '&startRow=',
          adult_search_part3 => '&numRows=',
-         devel_gene_list => "http://developingmouse.brain-map.org/".
-                              "data/search/gene/index.xml?term=*",
+
+         devel_search_part1 => 'http://developingmouse.brain-map.org/api/v2/data/Gene/query.xml?query=',
+         devel_search_part2 => '&start_row=',
+         devel_search_part3 => '&num_rows=',
+         devel_search_part4 => '&criteria=rma::include,data_sets[delegate$eq%27true%27][failed$eq%27false%27](products[id$eq3],specimen(donor(age[id$in1,2,4,5,7,11,14]))),rma::options[order$eq%27genes.acronym%27]',
+
          adult_xpz => "http://mouse.brain-map.org/grid_data/v1/visualize/",
          devel_xpz =>
-            "http://developingmouse.brain-map.org/grid_data/visualize/",
+            "http://developingmouse.brain-map.org/grid_data/v1/visualize/",
          devel_atlas => "http://www.brain-map.org/BrainExplorer2/".
                      "Atlases/Developing_Mouse_6.zip",
          adult_atlas => "http://www.brain-map.org/BrainExplorer2/".

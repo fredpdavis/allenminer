@@ -1,0 +1,13 @@
+# Change Log
+
+## [Unreleased] - 2015-11-06
+
+### Changed
+
+- updated ABA atlas URLs to reflect new ABA data release of May 14, 2015.
+
+- updated ontology.csv (ontology_v2.csv) parser to new format in adult atlas
+
+- updated to new query website and result XML format for devel atlas gene list
+
+- updated to new devel atlas XPZ file location

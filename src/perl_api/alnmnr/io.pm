@@ -1452,9 +1452,9 @@ sub load_aba_brainstructures {
       $fn = $in->{fn} ;
    } else {
       if ($in->{age} eq 'P56') {
-         $fn = $specs->{allen_adult_atlas_dir}.'/ontology2.csv' ;
+         $fn = $specs->{allen_adult_atlas_dir}.'/ontology_v2.csv' ;
       } else {
-         $fn = $specs->{allen_devel_atlas_dir}.'/ontology2.csv' ;
+         $fn = $specs->{allen_devel_atlas_dir}.'/ontology.csv' ;
       }
    }
 
@@ -1463,21 +1463,34 @@ sub load_aba_brainstructures {
 
    open(INF, $fn) ;
 
-# format for ontology.csv, pre-2015May14:
-#   my @fields = qw/StructureName Abbreviation ParentStruct red green blue informaticsId unk1 unk2 ontology_level/ ;
 
-# ABA Atlas ontology2.csv from release May 14,2015: 
+# ABA Atlas ontology_v2.csv from release May 14,2015:
 #  name,abbreviation,parent,mesh_name,red,green,blue,id,database_id,order,level
 #  "Basic cell groups and regions","grey",,"grey_8",191,218,227,1,8,0,99
 #  "Cerebrum","CH",8,"CH_567",176,240,255,2,567,2,99
-   my $header_line = <INF>; chomp $header_line ;
-   my @fields = qw/StructureName Abbreviation ParentStruct MeshName red green blue unk1 informaticsId unk2 ontology_level/ ;
+   my $data = {};
+
+   my @fields ;
+   if ($in->{age} eq 'P56') {
+      my $header_line = <INF>; chomp $header_line ;
+      @fields = qw/StructureName Abbreviation ParentID MeshName
+                   red green blue unk1 informaticsId unk2 ontology_level/ ;
+   } else {
+#Development atlas ontology.csv didn't change with May 2015 update
+
+# ABA Atlas ontology.csv from development atlas release May 14,2015:
+#  "Mus musculus","mouse","",200,106,57,1,15564,10,-1
+#  "neural plate","NP","mouse",200,106,57,2,15565,0,0
+#  "forebrain","F","NP",200,106,57,3,15566,0,1
+
+      @fields = qw/StructureName Abbreviation ParentStruct
+                   red green blue informaticsId unk1 unk2 ontology_level/ ;
+   }
 
    my $f2i = {};
    foreach my $j ( 0 .. $#fields) {
       $f2i->{$fields[$j]} = $j; }
 
-   my $data = {};
    while (my $line = <INF>) {
       chomp $line;
       $line =~ s/\, /\; /g ;
@@ -1492,9 +1505,20 @@ sub load_aba_brainstructures {
    }
    close(INF) ;
 
+# If adult atlas, have to convert ParentID to ParentStruct
+   if ($in->{age} eq 'P56') {
+      foreach my $informaticsId (keys %{$data->{ID2info}}) {
+         my $parentStruct =
+$data->{ID2info}->{$data->{ID2info}->{$informaticsId}->{ParentID}}->{Abbreviation};
+         if (!defined $parentStruct) { $parentStruct = ''; }
+         $data->{ID2info}->{$informaticsId}->{ParentStruct} =  $parentStruct ;
+      }
+   }
+
    $data->{tree} = {} ;
    foreach my $node (keys %{$data->{ID2info}}) {
-      if ($data->{ID2info}->{$node}->{ParentStruct} eq '') {next;}
+      if (!exists $data->{ID2info}->{$node}->{ParentStruct} ||
+          $data->{ID2info}->{$node}->{ParentStruct} eq '') {next;}
       my $parent_name = $data->{ID2info}->{$node}->{ParentStruct} ;
       my $parent_id = $data->{abbreviation2ID}->{$parent_name} ;
       $data->{tree}->{kids}->{$parent_id}->{$node}++ ;

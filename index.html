@@ -7,7 +7,7 @@
 
     <link rel="stylesheet" href="stylesheets/styles.css">
     <link rel="stylesheet" href="stylesheets/github-light.css">
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta name="viewport" content="width=device-width">
     <!--[if lt IE 9]>
     <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
@@ -31,28 +31,38 @@
         <h2>
 <a id="allenminer---a-tool-for-identification-of-genes-expressed-in-patterns-of-interested-using-the-allen-brain-atlas" class="anchor" href="#allenminer---a-tool-for-identification-of-genes-expressed-in-patterns-of-interested-using-the-allen-brain-atlas" aria-hidden="true"><span class="octicon octicon-link"></span></a>ALLENMINER - a tool for identification of genes expressed in patterns of interested using the Allen Brain Atlas.</h2>
 
+<p>v2.1; 2015 Dec 10</p>
+
 <h3>
 <a id="what-is-allenminer" class="anchor" href="#what-is-allenminer" aria-hidden="true"><span class="octicon octicon-link"></span></a>What is ALLENMINER?</h3>
 
-<p>ALLENMINER searches gene expression in the adult and developing mouse brain and spinal cord atlases published by the Allen Institute for Brain Science (<a href="http://www.alleninstitute.org/">AIBS</a>). It can identify genes that are (1) expressed, (2) expressed specifically, (3) expressed non-uniformly, (4) expressed in a graded fashion, or (5) expressed in a pattern similar to a query gene, in a user-specified region of interest of the mouse brain -- specified either as a set of brain region names or as x,y,z bounds of a cuboid.</p>
+<p>ALLENMINER searches for genes that express in patterns of interest in the developing or adult mouse Allen Brain Atlases (ABA).</p>
 
-<p>The code includes several routines for processing Allen Brain Atlas (ABA) data files, including the 3D expression data and the adult and developing reference atlases. Besides accessing the raw data, these routines are useful for visualizing ABA expression files on platforms where the ABA BrainExplorer application is not available, such as GNU/Linux. For example, all ABA expression files can be converted to <a href="http://www.pdb.org">PDB</a> (protein data bank) format for visualization in protein structure viewers, such as <a href="http://pymol.org">PyMOL</a>.</p>
+<p>It can search in any region of interest for genes that:
+1. express
+2. express specifically
+3. express non-uniformly
+4. express in a graded fashion
+5. express in a pattern similar to a query gene</p>
+
+<p>The region of interest can be specified as a set of brain region names or as
+x,y,z bounds of a cuboid region of interest.</p>
+
+<p>The code includes several routines that are generally useful for processing ABA
+data files, including parsers for XML and XPZ files. Besides accessing the
+raw data, these routines are useful for visualizing ABA expression files on
+platforms where the ABA BrainExplorer application is not available (eg,
+GNU/Linux). For example, all ABA expression files can be converted to PDB
+(protein data bank) format for visualization in protein structure viewers, such
+as PyMOL (<a href="http://pymol.org">http://pymol.org</a>).</p>
 
 <p>For more details take a look at the users manual.</p>
 
 <h3>
-<a id="whats-new-in-v201-2012-nov-27" class="anchor" href="#whats-new-in-v201-2012-nov-27" aria-hidden="true"><span class="octicon octicon-link"></span></a>What's new in v2.01? (2012 Nov 27)</h3>
+<a id="whats-new-in-v21-2015-dec-10" class="anchor" href="#whats-new-in-v21-2015-dec-10" aria-hidden="true"><span class="octicon octicon-link"></span></a>What's new in v2.1? (2015 Dec 10)</h3>
 
-<p>Updated to latest adult mouse brain atlas (v3).</p>
-
-<h3>
-<a id="what-was-new-in-v20-2012-april-13" class="anchor" href="#what-was-new-in-v20-2012-april-13" aria-hidden="true"><span class="octicon octicon-link"></span></a>What was new in v2.0? (2012 April 13)</h3>
-
-<ol>
-<li>Easier to install. No longer requires Python, any CPAN packages, or the (now outdated) ABA API package.</li>
-<li>Searches the latest atlases: ABA adult (v2.0; Nov 2011 release) and developing mouse brain atlases (v3.0; Nov 2011 release); adult and developing spinal cord atlases.</li>
-<li>Easier to view results. Experimental mode (make_report) formats search results along with original 2D ISH images for viewing in a web browser.</li>
-</ol>
+<p>Version 2.1 is compatible with the latest adult (v7) and developing (v6) brain
+atlases.</p>
 
 <h3>
 <a id="external-software" class="anchor" href="#external-software" aria-hidden="true"><span class="octicon octicon-link"></span></a>External Software</h3>

@@ -204,10 +204,9 @@ sub getspecs {
             'http://mouse.brain-map.org/experiment/siv?imageId=',
          interactive_image_part2 =>
             '&imageType=ish,expression&showSubImage=y&coordSystem=pixel&',
-#            x=4584&y=4126&z=50
 
          adult_search_part1 =>
-            'http://mouse.brain-map.org/grid_data/v1/search/gene?term=',
+            'http://api.brain-map.org/api/v2/data/Gene/query.xml?criteria=rma::include,data_sets(products[id$eq1]),rma::options[order$eq%27genes.acronym%27]',
          adult_search_part2 => '&startRow=',
          adult_search_part3 => '&numRows=',
 
@@ -229,7 +228,7 @@ sub getspecs {
             '.html?clear=true&contains=false&'.
             'excludeFail=on&gene_term=&searchSym=t',
          fastsearch_prefix => 
-            "https://zenodo.org/record/29427/files/v".
+            "https://zenodo.org/record/35164/files/v".
             $specs->{version}."_fastsearch_",
       }
    } ;

@@ -7,7 +7,7 @@
 \usepackage{hyperref}
 \usepackage{setspace}
 \usepackage{listings}
-\title{ALLENMINER users guide\\v2.01 (2012 Nov 27)\\
+\title{ALLENMINER users guide\\v2.1; 2015 Dec 10\\
 \includegraphics[bb=279 200 355 276,scale=0.6]{allenminer_logo.pdf}}
 \author{Fred P. Davis\\{\tt \href{http://fredpdavis.com}{http://fredpdavis.com}}}
 \begin{document}
@@ -15,27 +15,36 @@
 \maketitle
 
 \section*{Introduction}
-ALLENMINER searches gene expression in the adult and developing mouse brain and spinal cord atlases published by the Allen Institute for Brain Science (\href{http://www.alleninstitute.org}{AIBS}). It can identify genes that are (1) expressed, (2) expressed specifically, (3) expressed non-uniformly, (4) expressed in a graded fashion, or (5) expressed in a pattern similar to a query gene, in a user-specified region of interest of the mouse brain -- specified either as a set of brain region names or as x,y,z bounds of a cuboid.
+ALLENMINER searches for genes that express in patterns of interest in the developing or adult mouse atlases of the Allen Institute for Brain Science (\href{http://www.alleninstitute.org}{AIBS}).
 
-The code includes several routines for processing Allen Brain Atlas (ABA) data files, including the 3D expression data and the adult and developing reference atlases. Besides accessing the raw data, these routines are useful for visualizing ABA expression files on platforms where the ABA BrainExplorer application is not available, such as GNU/Linux. For example, all ABA expression files can be converted to PDB (Protein DataBank) format for visualization in protein structure viewers, such as PyMOL (\url{http://pymol.org}).
+It can search in any region of interest for genes that:
+\begin{enumerate}
+\item express
+\item express specifically
+\item express non-uniformly
+\item express in a graded fashion
+\item express in a pattern similar to a query gene
+\end{enumerate}
 
-I developed ALLENMINER as a postdoc at the \href{http://janelia.org}{HHMI Janelia Research Campus}.
+The region of interest can be specified as a set of brain region names or as
+x,y,z bounds of a cuboid region of interest.\\
 
-\section*{What's new in v2.01?}
-Updated to the lastest adult mouse brain atlas (v3).
+The code includes several routines that are generally useful for processing ABA
+data files, including parsers for XML and XPZ files. Besides accessing the
+raw data, these routines are useful for visualizing ABA expression files on
+platforms where the ABA BrainExplorer application is not available (eg,
+GNU/Linux). For example, all ABA expression files can be converted to PDB
+(protein data bank) format for visualization in protein structure viewers, such
+as PyMOL (http://pymol.org).\\
 
-\section*{What was new in v2.0?}
-\begin{itemize}\itemsep0pt
-\item Easier to install. No longer requires Python, any CPAN packages, or the (now outdated) ABA API package.
+I began to develop ALLENMINER at the HHMI Janelia Research Campus and continue
+to maintain it at NIH/NIAMS.
 
-\item Searches the latest ABA adult (v2.0; Nov 2011 release) and developing mouse brain atlases (v3.0; Nov 2011 release), as well as the adult and developing spinal cord atlases.
 
-\item Experimental mode ({\tt make\_report}) to format search results together with original 2D ISH images for viewing in a web browser.
-
-\end{itemize}
+\section*{What's new in v2.1?}
+Version 2.1 is compatible with the latest adult (v7) and developing (v6) brain atlases.
 
 \tableofcontents
-
 
 \section{Installing ALLENMINER}
 
@@ -61,7 +70,7 @@ Download the program from \url{http://fredpdavis.com/allenminer} and unpack it i
 \lstset{basicstyle=\ttfamily}
 \begin{lstlisting}
 cd /usr/local/software
-tar xvfz allenminer_v2.01.tar.gz
+tar xvfz allenminer_v2.1.tar.gz
 \end{lstlisting}
 
 
@@ -260,7 +269,7 @@ Specify a plane to restrict queries to those dataseries, one of: coronal or sagi
 
 \end{itemize}
 
-\subsection{(\textcolor{red}{EXPERIMENTAL}) {\tt make\_report}: Format search results for easy viewing}
+\subsection{{\tt make\_report}: Format search results for easy viewing}
 NOTE: Requires a local mirror of the atlas and expression files.
 
 This run mode formats search results into an HTML file that optionally retrieves 2D ISH images from the region(s) of interest.

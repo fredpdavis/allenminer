@@ -60,8 +60,7 @@ sub _run_download_data {
    if ($in->{atlas} eq 'adultbrain') {
       download_atlas({specs => $specs, atlas_type => 'adult'}) ;
 
-      if (!-s $specs->{download}->{fn}->{adult_xpz_list}) {
-         make_adult_xpz_list({specs => $specs}) ; }
+      make_adult_xpz_list({specs => $specs}) ;
 
       download_adultbrain_data({specs => $specs}) ;
 
@@ -76,8 +75,6 @@ sub _run_download_data {
 
    } elsif ($in->{atlas} eq 'fastsearch') {
 
-      die "ERROR: The fastsearch indices for this version of ALLENMINER are ".
-          "not ready yet." ;
       download_fastsearch_data({specs => $specs}) ;
 
    } else {
@@ -516,54 +513,51 @@ sub make_adult_xpz_list {
       $specs = $in->{specs} ;
    }
 
-   my @terms ; push @terms, 0 .. 9; push @terms, 'A' .. 'Z' ;
    my $xpz_list = {};
    print STDERR "Retrieving list of expression files: ";
-   foreach my $term (@terms) {
-      print STDERR "." ;
-      my $initsearch_url =
-         $specs->{download}->{URL}->{adult_search_part1}.$term.
-         $specs->{download}->{URL}->{adult_search_part2}.'0'.
-         $specs->{download}->{URL}->{adult_search_part3}.'5' ;
+   print STDERR "." ;
+   my $initsearch_url =
+      $specs->{download}->{URL}->{adult_search_part1}.
+      $specs->{download}->{URL}->{adult_search_part2}.'0'.
+      $specs->{download}->{URL}->{adult_search_part3}.'50' ;
 
-      my $num_hits ;
-      {
-      my ($t_fh, $t_fn) = tempfile() ; close($t_fh) ;
-      my $tcom = "wget -q \'$initsearch_url\' -O $t_fn"  ;
-#      print STDERR "$tcom\n\n";
-      system($tcom) ;
+   my $num_hits ;
+   {
+   my ($t_fh, $t_fn) = tempfile() ; close($t_fh) ;
+   my $tcom = "wget -q \'$initsearch_url\' -O $t_fn"  ;
+   system($tcom) ;
 
-      open(SEARCHRESF, $t_fn) ;
-      while (my $line = <SEARCHRESF>) {
+   open(SEARCHRESF, $t_fn) ;
+   while (my $line = <SEARCHRESF>) {
+      if ($line =~ /total_rows/) {
          chomp $line;
-         if ($line =~ /total-entries/) {
-            ($num_hits) = ($line =~ /genes total-entries="([0-9]+)"/) ;
-            last;
-         }
-      }
-      close(SEARCHRESF) ;
-#      print STDERR "$num_hits HITS FROM INITSEARCH: $t_fn\n";
-      unlink $t_fn ;
-      }
-
-      if ($num_hits == 0) { next;}
-      my $num_chunks = POSIX::ceil($num_hits /
-                        $specs->{download}->{adult_xpz_search_chunk}) ;
-      foreach my $j ( 0 .. $num_chunks) {
-         my $startrow = $j * $specs->{download}->{adult_xpz_search_chunk} ;
-         my $search_url =
-               $specs->{download}->{URL}->{adult_search_part1}.$term.
-               $specs->{download}->{URL}->{adult_search_part2}.$startrow.
-               $specs->{download}->{URL}->{adult_search_part3}.
-               $specs->{download}->{adult_xpz_search_chunk} ;
-         my ($t_fh, $t_fn) = tempfile() ; close($t_fh) ;
-         my $tcom = "wget -q \'$search_url\' -O $t_fn" ;
-         system($tcom) ;
-
-         aba_parse_adult_search_results({ fn => $t_fn, hits => $xpz_list }) ;
-         unlink $t_fn ;
+         ($num_hits) = ($line =~ /total_rows='([0-9]+)'/) ;
+         last;
       }
    }
+   close(SEARCHRESF) ;
+   unlink $t_fn ;
+   }
+
+   if ($num_hits == 0) { die "ERROR: No expression files found on server";}
+
+   my $num_chunks = POSIX::ceil($num_hits /
+                     $specs->{download}->{adult_xpz_search_chunk}) ;
+   foreach my $j ( 0 .. $num_chunks) {
+      my $startrow = $j * $specs->{download}->{adult_xpz_search_chunk} ;
+      my $search_url =
+            $specs->{download}->{URL}->{adult_search_part1}.
+            $specs->{download}->{URL}->{adult_search_part2}.$startrow.
+            $specs->{download}->{URL}->{adult_search_part3}.
+            $specs->{download}->{adult_xpz_search_chunk} ;
+      my ($t_fh, $t_fn) = tempfile() ; close($t_fh) ;
+      my $tcom = "wget -q \'$search_url\' -O $t_fn" ;
+      system($tcom) ;
+
+      aba_parse_adult_search_results({ fn => $t_fn, hits => $xpz_list }) ;
+      unlink $t_fn ;
+   }
+
    print STDERR "X\n";
    print STDERR "X\n";
 
@@ -577,8 +571,16 @@ sub make_adult_xpz_list {
    foreach my $gene (sort keys %{$xpz_list}) {
       foreach my $imageseries (sort {$a <=> $b}
             keys %{$xpz_list->{$gene}->{imageseries}}) {
+
+         if ($xpz_list->{$gene}->{imageseries}->{$imageseries}->{failed} eq
+             'true') { next; }
+
          if (!exists $xpz_list->{$gene}->{"entrez-id"}) {
             $xpz_list->{$gene}->{"entrez-id"} = '' ; }
+
+         if (!exists $xpz_list->{$gene}->{imageseries}->{$imageseries}->{age}){
+            $xpz_list->{$gene}->{imageseries}->{$imageseries}->{age} = 'P56';}
+
          my @outvals = ( $gene,
             $xpz_list->{$gene}->{"id"},
             $xpz_list->{$gene}->{"name"},
@@ -606,37 +608,104 @@ sub aba_parse_adult_search_results {
       $hits = {};
    }
 
+   my $planeid2text = {
+      1 => 'coronal',
+      2 => 'sagittal'
+   } ;
+
    my $cur_gene = {};
    my $cur_imageseries = {};
+
+### example of query response
+#<Response success='true' start_row='0' num_rows='50' total_rows='19991'><objects>
+#  <object>
+#    <acronym>0610005G16Rik*</acronym>
+#    <alias-tags nil="true"/>
+#    <chromosome-id nil="true"/>
+#    <ensembl-id nil="true"/>
+#    <entrez-id nil="true"/>
+#    <homologene-id nil="true"/>
+#    <id>149630</id>
+#    <legacy-ensembl-gene-id nil="true"/>
+#    <name>RIKEN cDNA 0610005G16 gene (non-RefSeq)</name>
+#    <organism-id>2</organism-id>
+#    <sphinx-id>158073</sphinx-id>
+#    <data-sets>
+#      <data-set>
+#        <blue-channel nil="true"/>
+#        <delegate type="boolean">false</delegate>
+#        <expression type="boolean">true</expression>
+#        <failed type="boolean">false</failed>
+#        <failed-facet type="integer">734881840</failed-facet>
+#        <green-channel nil="true"/>
+#        <id type="integer">74357755</id>
+#        <name nil="true"/>
+#        <plane-of-section-id type="integer">2</plane-of-section-id>
+#        <qc-date type="datetime">2009-05-02T23:03:44Z</qc-date>
+#        <red-channel nil="true"/>
+#        <reference-space-id type="integer">10</reference-space-id>
+#        <rnaseq-design-id type="integer" nil="true"/>
+#        <section-thickness type="float">25.0</section-thickness>
+#        <specimen-id type="integer">74302711</specimen-id>
+#        <sphinx-id type="integer">121773</sphinx-id>
+#        <storage-directory>/external/aibssan/production32/prod341/image_series_74357755/</storage-directory>
+#        <weight type="integer">5270</weight>
+#        <products type="array">
+#          <product>
+#            <abbreviation>Mouse</abbreviation>
+#            <description>Genome-wide, high-resolution ISH data detailing gene expression throughout the adult mouse brain.</description>
+#            <id type="integer">1</id>
+#            <name>Mouse Brain</name>
+#            <product-name-facet type="integer">2757464828</product-name-facet>
+#            <resource>Allen Mouse Brain Atlas</resource>
+#            <species>Mouse</species>
+#            <species-name-facet type="integer">1861523945</species-name-facet>
+#            <tags nil="true"/>
+#          </product>
+#        </products>
+#      </data-set>
+#    </data-sets>
+#  </object>
+###
+
+
 
    open(SEARCHRESF, $in->{fn}) ;
    while (my $line = <SEARCHRESF>) {
       chomp $line;
 
-      if ($line =~ /^    <id>/) {
+      if ($line =~ /^ {4}<id>/) {
          ($cur_gene->{id}) = ($line =~ /^    <id>(.+)<\/id>$/) ;
-      } elsif ($line =~ /^    <name>/) {
-         ($cur_gene->{name}) = ($line =~ /^    <name>(.+)<\/name>$/) ;
-      } elsif ($line =~ /^    <entrez-id>/) {
-         ($cur_gene->{"entrez-id"}) =
-            ($line =~ /^    <entrez-id>(.+)<\/entrez-id>$/) ;
-      } elsif ($line =~ /^    <gene-symbol>/) {
-         ($cur_gene->{"gene-symbol"}) =
-            ($line =~ /^    <gene-symbol>(.+)<\/gene-symbol>$/) ;
-      } elsif ($line =~ /^        <id>/) {
-         ($cur_imageseries->{id}) =
-            ($line =~ /<id>(.+)<\/id>$/) ;
-      } elsif ($line =~ /^        <plane-of-section>/) {
-         ($cur_imageseries->{"plane-of-section"}) =
-            ($line =~ /<plane-of-section>(.+)<\/plane-of-section>$/) ;
-      } elsif ($line =~ /^        <age>/) {
-         ($cur_imageseries->{"age"}) =
-            ($line =~ /<age>(.+)<\/age>$/) ;
-      } elsif ($line =~ /^        <failed>/) {
-         ($cur_imageseries->{"failed"}) =
-            ($line =~ /<failed>(.+)<\/failed>$/) ;
 
-      } elsif ($line =~ /^      <\/image-series>$/) {
+      } elsif ($line =~ /^ {4}<name>/) {
+         ($cur_gene->{name}) = ($line =~ /<name>(.+)<\/name>$/) ;
+
+      } elsif ($line =~ /^ {4}<entrez-id>/) {
+         ($cur_gene->{"entrez-id"}) =
+            ($line =~ /<entrez-id>(.+)<\/entrez-id>$/) ;
+
+      } elsif ($line =~ /^ {4}<acronym>/) {
+         ($cur_gene->{"gene-symbol"}) =
+            ($line =~ /<acronym>(.+)<\/acronym>$/) ;
+
+      } elsif ($line =~ /^ {8}<id type="integer">/) {
+         ($cur_imageseries->{id}) =
+            ($line =~ /<id type="integer">(.+)<\/id>$/) ;
+
+      } elsif ($line =~ /^ {8}<plane-of-section-id type="integer">/) {
+         my ($plane_id) =
+            ($line =~ /<plane-of-section-id type="integer">(.+)<\/plane-of-section-id>$/) ;
+
+         ($cur_imageseries->{"plane-of-section"}) = $planeid2text->{$plane_id};
+
+      } elsif ($line =~ /^ {8}<failed type="boolean">/) {
+         ($cur_imageseries->{"failed"}) =
+            ($line =~ /<failed type="boolean">(.+)<\/failed>$/) ;
+
+
+      } elsif ($line =~ /^      <\/data-set>$/) {
+         $cur_imageseries->{"age"} = "P56" ;
+
          if (!exists $hits->{$cur_gene->{"gene-symbol"}}) {
             $hits->{$cur_gene->{"gene-symbol"}}->{imageseries} = {} ;
             foreach my $gene_feat (keys %{$cur_gene}) {
@@ -651,6 +720,8 @@ $hits->{$cur_gene->{"gene-symbol"}}->{imageseries}->{$cur_imageseries->{id}}->{$
          }
 
          $cur_imageseries= {} ;
+
+
       } elsif ($line =~ /  <\/gene>$/) {
          $cur_gene = {} ;
       }
@@ -661,6 +732,7 @@ $hits->{$cur_gene->{"gene-symbol"}}->{imageseries}->{$cur_imageseries->{id}}->{$
    return $hits ;
 
 }
+
 
 sub download_adultbrain_data {
 
@@ -681,8 +753,9 @@ sub download_adultbrain_data {
    my $header = <LISTF>; $header =~ s/^#// ; chomp $header;
    my @headers = split(/\t/, $header) ;
 
-   print STDERR "Retrieving adult brain expression files: ";
+   print STDERR "Retrieving adult brain expression files:\n";
    my $f2i ; map {$f2i->{$headers[$_]} = $_;} (0 .. $#headers) ;
+   my $num_alreadyexist = 0 ;
    while (my $line = <LISTF>) {
       chomp $line;
       my @t = split(/\t/, $line) ;
@@ -703,8 +776,15 @@ sub download_adultbrain_data {
 
       my $url = $specs->{download}->{URL}->{adult_xpz}.$imageseries_id ;
       my $xpz_command = "wget -q \'$url\' -O \'$xpz_dir/$xpz_fn\'" ;
-      print {$out_fh->{adult_wget}} $xpz_command."\n" ;
+
+      if (-s "$xpz_dir/$xpz_fn") {
+         $num_alreadyexist++ ;
+      } else {
+         print {$out_fh->{adult_wget}} $xpz_command."\n" ;
+      }
    }
+   close($out_fh->{adult_wget}) ;
+   print STDERR "Skipping $num_alreadyexist expression files that already exist\n";
    close(LISTF) ;
 
    my ($wget_err_fh, $wget_err_fn) =

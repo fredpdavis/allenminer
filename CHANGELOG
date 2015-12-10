@@ -1,5 +1,11 @@
 # Change Log
 
+## v2.1 - 2015-12-09
+
+- updated query to retrieve list of adult dataseries.
+
+- created new fastsearch indices and uploaded to ZENODO
+
 ## [Unreleased] - 2015-11-06
 
 ### Changed

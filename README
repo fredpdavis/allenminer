@@ -1,27 +1,27 @@
-----------------------------------------------------------------------------
-ALLENMINER: a tool for identification of genes expressed in patterns of
-              interest using the Allen Brain Atlas
-
-Nov 6, 2015.
-
+ALLENMINER: a tool to find patterns of interest in the Allen Brain Atlas
+========================================================================
+Version 2.1; Dec 10, 2015.
+http://fredpdavis.com/allenminer
 Copyright 2008, 2012, 2015  Fred P. Davis
-----------------------------------------------------------------------------
 
 
-o What is ALLENMINER?
----------------------
+What is ALLENMINER?
+-------------------
+ALLENMINER searches for genes that express in patterns of interest in the
+developing or adult mouse Allen Brain Atlases (ABA).
 
-ALLENMINER is a software package that performs expression queries of
-user-specified regions of the developing and adult mouse brains using the 3D
-expression data in the Allen Brain Atlas. It can identify genes that are (1)
-expressed, (2) expressed specifically, (3) expressed non-uniformly, (4)
-expressed in a graded fashion, or (5) expressed in a pattern similar to a query
-gene, in a user-specified region of interest of the mouse brain. The region of
-interest can be specified as a set of ABA reference brain region names or as
+It can search in any region of interest for genes that:
+1. express
+2. express specifically
+3. express non-uniformly
+4. express in a graded fashion
+5. express in a pattern similar to a query gene
+
+The region of interest can be specified as a set of brain region names or as
 x,y,z bounds of a cuboid region of interest.
 
 The code includes several routines that are generally useful for processing ABA
-data files, including parsers for the XML and XPZ files. Besides accessing the
+data files, including parsers for XML and XPZ files. Besides accessing the
 raw data, these routines are useful for visualizing ABA expression files on
 platforms where the ABA BrainExplorer application is not available (eg,
 GNU/Linux). For example, all ABA expression files can be converted to PDB
@@ -31,36 +31,28 @@ as PyMOL (http://pymol.org).
 I began to develop ALLENMINER at the HHMI Janelia Research Campus and continue
 to maintain it at NIH/NIAMS.
 
-o What's new?
-
-Updated to the latest ABA releases of the adult (v7) and developing (v6) atlases
-
-
-o NEWS: PRE-RELEASE VERSION: 2015 Nov 6
----------------------------------------
-
-* WARNING: The fastsearch indices for this pre-release version have not been
-  created yet -- until I do so, you must download the entire expression atlas
-  to use ALLENMINER.
+What's new?
+------------
+Version 2.1 is compatible with the latest adult (v7) and developing (v6) brain
+atlases.
 
 
-o Documentation
----------------
+Documentation
+-------------
+docs/allenminer_user_manual.pdf offers detailed instruction on
+installation and usage. This README offers a quick guide to a small
+subset of the features.
 
- docs/allenminer_user_manual.pdf offers detailed instruction on
- installation and usage. This README offers a quick guide to a small
- subset of the features.
+
+Citing ALLENMINER
+-----------------
+A tool for identification of genes expressed in patterns of interest using
+the Allen Brain Atlas. Fred P. Davis and Sean R. Eddy.
+Bioinformatics 2009. 25(13): 1647-54. doi:10.1093/bioinformatics/btp288
 
 
-o Citing ALLENMINER
+Contact information
 -------------------
- A tool for identification of genes expressed in patterns of interest using
- the Allen Brain Atlas. Fred P. Davis and Sean R. Eddy.
- Bioinformatics 2009. 25(13): 1647-54. doi:10.1093/bioinformatics/btp288
-
-
-o Contact information
----------------------
  Fred P. Davis
  http://fredpdavis.com
  fredpdavis@gmail.com
